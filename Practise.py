@@ -15,12 +15,10 @@ if __name__ == '__main__':
         [52.21, 53.12, 54.48, 55.84, 57.20, 58.57, 59.93, 61.29, 63.11, 64.47, 66.28, 68.10, 69.92, 72.19, 74.46])
 
     # Initialize m and b to a random int
-    m_value = rand.random()
-    b_value = rand.random()
+    mb_value = rand.random(2)
 
     # Make m and b shared variables for efficiency
-    m = theano.shared(m_value, name='m')
-    b = theano.shared(b_value, name='b')
+    mb = theano.shared(mb_value, name='m')
 
     # Make x and y symbolic variables (for dat speed)
     x = t.vector('x')
@@ -30,7 +28,7 @@ if __name__ == '__main__':
     num_samples = X.shape[0]
 
     # Prediction is the predicted line from x numpy array
-    prediction = t.dot(x, m) + b
+    prediction = t.dot(x, mb[0]) + mb[1]
 
     # Error is the predicted minus actual squared
     error = t.sum(t.pow(prediction - y, 2))
@@ -39,8 +37,7 @@ if __name__ == '__main__':
     cost = error / (2 * num_samples)
 
     # Compute Gradient
-    grad_m = t.grad(cost, m)
-    grad_b = t.grad(cost, b)
+    grad = t.grad(cost, mb)
 
     # Set learning rate and amount of epochs
     learning_rate = 0.2
@@ -58,7 +55,7 @@ if __name__ == '__main__':
         b: b is updated with a new b. New b is based on learning rate and new grad_b
     """
     train = theano.function([x, y], cost,
-                            updates=[(m, m - (grad_m * learning_rate)), (b, b - (grad_b * learning_rate))])
+                            updates=[(mb, mb - (grad * learning_rate))])
 
     """Predict function
 
@@ -74,8 +71,8 @@ if __name__ == '__main__':
         epoch_cost = train(X, Y)
         print("Epoch: %s, Average error: %s" % (i, epoch_cost))
 
-    print("Slope: %s" % m.get_value())
-    print("Intercept: %s" % b.get_value())
+    print("Slope: %s" % mb[0].eval())
+    print("Intercept: %s" % mb[1].eval())
 
     predict_values = numpy.linspace(1, 2)
     predicted = predict(predict_values)
